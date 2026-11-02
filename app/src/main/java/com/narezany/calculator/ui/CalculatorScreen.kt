@@ -63,6 +63,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.narezany.calculator.calc.CalculatorUiState
 import com.narezany.calculator.calc.CalculatorViewModel
 import com.narezany.calculator.ui.theme.CalculatorTheme
+import com.narezany.calculator.ui.theme.ExpressiveMotion
 
 /** Every user intent the keypad can produce. */
 sealed interface CalcAction {
@@ -212,7 +213,6 @@ private fun DisplayPanel(
     modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.colorScheme
-    val motion = MaterialTheme.motionScheme
     val shape = RoundedCornerShape(34.dp)
     val scrollState = rememberScrollState()
 
@@ -258,7 +258,7 @@ private fun DisplayPanel(
         val targetSize = if (compact) baseSize * 0.7f else baseSize
         val fontSize by animateFloatAsState(
             targetValue = targetSize,
-            animationSpec = motion.defaultSpatialSpec<Float>(),
+            animationSpec = ExpressiveMotion.spatial<Float>(),
             label = "displayFontSize",
         )
 
@@ -390,11 +390,11 @@ private fun Keypad(
 /**
  * M3 Expressive key.
  *
- * Geometry (corner radius, scale, elevation) is driven by the theme's spatial
- * spring — `MotionScheme.expressive().defaultSpatialSpec()`, which is exactly
+ * Geometry (corner radius, scale, elevation) is driven by the M3E spatial
+ * spring — `ExpressiveMotion.spatial()`, i.e. the expressive default
  * `spring(dampingRatio = 0.8f, stiffness = 380f)` — so the key overshoots
  * slightly and settles instead of easing linearly. Colour uses the matching
- * effects spring.
+ * effects spring (1.0 / 1600).
  *
  * At rest the key is a full pill (`percent = 50`). While pressed it morphs to
  * the M3 "large increased" corner (20dp) and back. The animated shape is
@@ -408,7 +408,6 @@ private fun CalcKey(
     onClick: () -> Unit,
 ) {
     val colors = MaterialTheme.colorScheme
-    val motion = MaterialTheme.motionScheme
 
     val containerColor = when (key.kind) {
         KeyKind.Digit -> colors.surfaceContainerHigh
@@ -426,10 +425,11 @@ private fun CalcKey(
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
 
-    // Spatial springs move things, effects springs change colours (M3E scheme).
-    val spatialDp = motion.defaultSpatialSpec<Dp>()
-    val spatialFloat = motion.defaultSpatialSpec<Float>()
-    val effectsColor = motion.defaultEffectsSpec<Color>()
+    // Expressive motion tokens: spatial springs move geometry, effects springs
+    // change colour. Values are the M3E defaults (0.8/380 and 1.0/1600).
+    val spatialDp = ExpressiveMotion.spatial<Dp>()
+    val spatialFloat = ExpressiveMotion.spatial<Float>()
+    val effectsColor = ExpressiveMotion.effects<Color>()
 
     BoxWithConstraints(modifier = modifier) {
         // Rest: a full pill, exactly like an M3 Expressive button.
@@ -463,6 +463,11 @@ private fun CalcKey(
             colors.outlineVariant.copy(alpha = 0.28f)
         }
 
+        // Keys grow and shrink with the available space, so the keypad stays
+        // readable in landscape as well. Captured here because BoxWithConstraints
+        // scope is not accessible from the nested Box below.
+        val labelSize = (maxHeight.value * 0.42f).coerceIn(15f, 33f)
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -486,13 +491,10 @@ private fun CalcKey(
                 .semantics { contentDescription = key.description },
             contentAlignment = Alignment.Center,
         ) {
-            // Keys grow and shrink with the available space, so the keypad
-            // stays readable in landscape as well.
-            val size = (maxHeight.value * 0.42f).coerceIn(15f, 33f)
             Text(
                 text = key.label,
                 color = contentColor,
-                fontSize = size.sp,
+                fontSize = labelSize.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
             )
