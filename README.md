@@ -10,7 +10,7 @@
 | Язык | Kotlin 2.0.21 |
 | UI | Jetpack Compose (BOM 2025.12.01), Material 3 1.4.0, XML-лейаутов нет |
 | Дизайн | Material 3 Expressive + Dynamic Color (Material You / обои) |
-| Моушен | `MotionScheme.expressive()`, spatial spring 0.8 / 380 |
+| Моушен | M3E-токены: spatial spring 0.8 / 380, effects 1.0 / 1600 |
 | Версия | 1.1.0 (versionCode 2) |
 | Gradle / AGP | 8.9 / 8.7.3 |
 | compileSdk / minSdk | 35 / 24 (Android 7.0+) |
@@ -35,19 +35,22 @@
   `EFFECT_TICK`; для «=» — более ощутимый `EFFECT_CLICK`.
 - Кнопки в духе M3 Expressive: в покое — таблетка (`percent = 50`), при нажатии
   радиус плавно морфится в токен *large increased* (20dp). Геометрия живёт на
-  `MotionScheme.expressive().defaultSpatialSpec()` — это
-  `spring(dampingRatio = 0.8f, stiffness = 380f)`, поэтому клавиша слегка
-  «перелетает» и пружинит. Цвет — на `defaultEffectsSpec()`.
+  M3E spatial-спринге `spring(dampingRatio = 0.8f, stiffness = 380f)`, поэтому
+  клавиша слегка «перелетает» и пружинит; цвет — на effects-спринге `1.0 / 1600`.
+  Оба токена — в `ExpressiveMotion.spatial()` / `effects()`.
 - Анимации нажатия: пружинный scale и elevation, плавная смена цвета, «дыхание»
   шрифта на длинном выражении, появление предпросмотра и ошибок.
 - Адаптивная вёрстка: портрет — колонка, ландшафт — компактный режим.
 
 ## Что нового в 1.1.0
 
-- Material 3 **1.4.0** (Compose BOM 2025.12.01) — первый стабильный M3E-релиз.
-- `MotionScheme.expressive()` подключён в `CalculatorTheme`.
+- Material 3 **1.4.0** (Compose BOM 2025.12.01).
+- Motion-токены M3E применены напрямую (`ExpressiveMotion`). В stable 1.4.0
+  `MotionScheme` ещё помечен `internal`, публичным он становится только в 1.5.0
+  (та версия требует compileSdk 37 / AGP 9.1), поэтому значения скопированы 1:1
+  из `ExpressiveMotionTokens` — физика идентична `MotionScheme.expressive()`.
 - Клавиши морфятся: покой — pill, нажатие — 20dp, радиус анимируется
-  `defaultSpatialSpec` (spring 0.8 / 380) с лёгким overshoot.
+  spatial-спрингом (0.8 / 380) с лёгким overshoot.
 - Цвет, тень и масштаб переведены на M3E-спринги, ripple обрезается по
   анимированной форме (`clip(shape)`).
 
@@ -125,7 +128,7 @@ git push -u origin main
 
 Быстрее всего — со страницы релизов:
 <https://github.com/DeNolisik5/MD3-Calculator/releases> — там к релизу
-`v1.1.0` прикреплён готовый `app-debug.apk`.
+`v1.1.0` прикреплён готовый `MD3-Calculator-1.1.0.apk`.
 
 Либо соберите сами через Actions:
 
