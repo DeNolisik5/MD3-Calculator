@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -153,9 +152,7 @@ fun CalculatorScreen(
             val landscape = maxWidth > maxHeight
 
             Column(modifier = Modifier.fillMaxSize()) {
-                if (!landscape) {
-                    Header()
-                }
+                Spacer(Modifier.height(if (landscape) 6.dp else 10.dp))
 
                 DisplayPanel(
                     state = state,
@@ -178,31 +175,6 @@ fun CalculatorScreen(
                 Spacer(Modifier.height(if (landscape) 4.dp else 10.dp))
             }
         }
-    }
-}
-
-@Composable
-private fun Header() {
-    val colors = MaterialTheme.colorScheme
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp, bottom = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            Modifier
-                .size(width = 24.dp, height = 8.dp)
-                .clip(CircleShape)
-                .background(colors.primary)
-        )
-        Spacer(Modifier.width(9.dp))
-        Text(
-            text = "КАЛЬКУЛЯТОР",
-            style = MaterialTheme.typography.labelLarge,
-            color = colors.onSurfaceVariant,
-            letterSpacing = 3.sp,
-        )
     }
 }
 
