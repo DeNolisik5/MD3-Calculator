@@ -4,13 +4,10 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -39,6 +36,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -57,6 +55,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -213,6 +212,7 @@ private fun DisplayPanel(
     modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.colorScheme
+    val motion = MaterialTheme.motionScheme
     val shape = RoundedCornerShape(34.dp)
     val scrollState = rememberScrollState()
 
@@ -258,7 +258,7 @@ private fun DisplayPanel(
         val targetSize = if (compact) baseSize * 0.7f else baseSize
         val fontSize by animateFloatAsState(
             targetValue = targetSize,
-            animationSpec = spring(dampingRatio = 0.8f, stiffness = 500f),
+            animationSpec = motion.defaultSpatialSpec<Float>(),
             label = "displayFontSize",
         )
 
@@ -319,6 +319,8 @@ private data class KeySpec(
     val kind: KeyKind,
     val action: CalcAction,
 )
+
+private val PressedCornerRadius = 20.dp
 
 private val KeypadRows: List<List<KeySpec>> = listOf(
     listOf(
@@ -385,6 +387,19 @@ private fun Keypad(
     }
 }
 
+/**
+ * M3 Expressive key.
+ *
+ * Geometry (corner radius, scale, elevation) is driven by the theme's spatial
+ * spring — `MotionScheme.expressive().defaultSpatialSpec()`, which is exactly
+ * `spring(dampingRatio = 0.8f, stiffness = 380f)` — so the key overshoots
+ * slightly and settles instead of easing linearly. Colour uses the matching
+ * effects spring.
+ *
+ * At rest the key is a full pill (`percent = 50`). While pressed it morphs to
+ * the M3 "large increased" corner (20dp) and back. The animated shape is
+ * applied with `clip`, so background, border and ripple all follow it.
+ */
 @Composable
 private fun CalcKey(
     key: KeySpec,
@@ -393,6 +408,7 @@ private fun CalcKey(
     onClick: () -> Unit,
 ) {
     val colors = MaterialTheme.colorScheme
+    val motion = MaterialTheme.motionScheme
 
     val containerColor = when (key.kind) {
         KeyKind.Digit -> colors.surfaceContainerHigh
@@ -410,46 +426,64 @@ private fun CalcKey(
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
 
-    val scale by animateFloatAsState(
-        targetValue = if (pressed) 0.90f else 1f,
-        animationSpec = spring(dampingRatio = 0.4f, stiffness = 900f),
-        label = "keyScale",
-    )
-    val elevation by animateDpAsState(
-        targetValue = if (pressed) 0.dp else 3.dp,
-        animationSpec = tween(120),
-        label = "keyElevation",
-    )
-    val background by animateColorAsState(
-        targetValue = if (pressed) lerp(containerColor, contentColor, 0.16f) else containerColor,
-        animationSpec = tween(110),
-        label = "keyColor",
-    )
+    // Spatial springs move things, effects springs change colours (M3E scheme).
+    val spatialDp = motion.defaultSpatialSpec<Dp>()
+    val spatialFloat = motion.defaultSpatialSpec<Float>()
+    val effectsColor = motion.defaultEffectsSpec<Color>()
 
-    val shape = RoundedCornerShape(28.dp)
+    BoxWithConstraints(modifier = modifier) {
+        // Rest: a full pill, exactly like an M3 Expressive button.
+        val pillRadius = minOf(maxWidth, maxHeight) / 2
+        // Pressed: morph into the M3 "large increased" corner token.
+        val cornerRadius by animateDpAsState(
+            targetValue = if (pressed) PressedCornerRadius else pillRadius,
+            animationSpec = spatialDp,
+            label = "keyCornerRadius",
+        )
+        val shape = RoundedCornerShape(cornerRadius)
 
-    Box(
-        modifier = modifier
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
-            .shadow(elevation = elevation, shape = shape, clip = false)
-            .clip(shape)
-            .background(background)
-            .clickable(
-                interactionSource = interactionSource,
-                indication = LocalIndication.current,
-                onClickLabel = key.description,
-                onClick = {
-                    haptics.tick(strong = key.kind == KeyKind.Equals)
-                    onClick()
-                },
-            )
-            .semantics { contentDescription = key.description },
-    ) {
-        BoxWithConstraints(
-            modifier = Modifier.fillMaxSize(),
+        val scale by animateFloatAsState(
+            targetValue = if (pressed) 0.92f else 1f,
+            animationSpec = spatialFloat,
+            label = "keyScale",
+        )
+        val elevation by animateDpAsState(
+            targetValue = if (pressed) 0.dp else 3.dp,
+            animationSpec = spatialDp,
+            label = "keyElevation",
+        )
+        val background by animateColorAsState(
+            targetValue = if (pressed) lerp(containerColor, contentColor, 0.16f) else containerColor,
+            animationSpec = effectsColor,
+            label = "keyColor",
+        )
+        val borderColor = if (key.kind == KeyKind.Equals) {
+            colors.onPrimary.copy(alpha = 0.22f)
+        } else {
+            colors.outlineVariant.copy(alpha = 0.28f)
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                }
+                .shadow(elevation = elevation, shape = shape, clip = false)
+                .clip(shape)
+                .background(background)
+                .border(1.dp, borderColor, shape)
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = ripple(color = contentColor),
+                    onClickLabel = key.description,
+                    onClick = {
+                        haptics.tick(strong = key.kind == KeyKind.Equals)
+                        onClick()
+                    },
+                )
+                .semantics { contentDescription = key.description },
             contentAlignment = Alignment.Center,
         ) {
             // Keys grow and shrink with the available space, so the keypad

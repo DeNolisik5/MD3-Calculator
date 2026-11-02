@@ -8,8 +8,10 @@
 | Параметр | Значение |
 |---|---|
 | Язык | Kotlin 2.0.21 |
-| UI | Jetpack Compose (Compose BOM 2024.12.01), XML-лейаутов нет |
-| Дизайн | Material 3 + Dynamic Color (Material You / обои пользователя) |
+| UI | Jetpack Compose (BOM 2025.12.01), Material 3 1.4.0, XML-лейаутов нет |
+| Дизайн | Material 3 Expressive + Dynamic Color (Material You / обои) |
+| Моушен | `MotionScheme.expressive()`, spatial spring 0.8 / 380 |
+| Версия | 1.1.0 (versionCode 2) |
 | Gradle / AGP | 8.9 / 8.7.3 |
 | compileSdk / minSdk | 35 / 24 (Android 7.0+) |
 | Сборка | GitHub Actions → готовый APK |
@@ -31,9 +33,23 @@
   «выразительная» фиолетово-розовая тема. Тёмная тема — по системной настройке.
 - Haptic feedback на каждое нажатие: платформенный key-tick + короткая
   `EFFECT_TICK`; для «=» — более ощутимый `EFFECT_CLICK`.
-- Анимации нажатия: пружинный scale, плавная смена цвета, «дыхание» шрифта на
-  длинном выражении, появление предпросмотра и ошибок.
+- Кнопки в духе M3 Expressive: в покое — таблетка (`percent = 50`), при нажатии
+  радиус плавно морфится в токен *large increased* (20dp). Геометрия живёт на
+  `MotionScheme.expressive().defaultSpatialSpec()` — это
+  `spring(dampingRatio = 0.8f, stiffness = 380f)`, поэтому клавиша слегка
+  «перелетает» и пружинит. Цвет — на `defaultEffectsSpec()`.
+- Анимации нажатия: пружинный scale и elevation, плавная смена цвета, «дыхание»
+  шрифта на длинном выражении, появление предпросмотра и ошибок.
 - Адаптивная вёрстка: портрет — колонка, ландшафт — компактный режим.
+
+## Что нового в 1.1.0
+
+- Material 3 **1.4.0** (Compose BOM 2025.12.01) — первый стабильный M3E-релиз.
+- `MotionScheme.expressive()` подключён в `CalculatorTheme`.
+- Клавиши морфятся: покой — pill, нажатие — 20dp, радиус анимируется
+  `defaultSpatialSpec` (spring 0.8 / 380) с лёгким overshoot.
+- Цвет, тень и масштаб переведены на M3E-спринги, ripple обрезается по
+  анимированной форме (`clip(shape)`).
 
 ## Структура проекта
 
@@ -105,7 +121,13 @@ git push -u origin main
 (GitHub → Settings → Developer settings → Tokens). Токен нигде в проекте не
 хранится; после первой загрузки его лучше отозвать и создать новый.
 
-## Как скачать APK из GitHub Actions
+## Как скачать APK
+
+Быстрее всего — со страницы релизов:
+<https://github.com/DeNolisik5/MD3-Calculator/releases> — там к релизу
+`v1.1.0` прикреплён готовый `app-debug.apk`.
+
+Либо соберите сами через Actions:
 
 1. Откройте репозиторий → вкладка **Actions**.
 2. Слева выберите workflow **Build APK** → последний запуск.

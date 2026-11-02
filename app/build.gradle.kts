@@ -12,8 +12,8 @@ android {
         applicationId = "com.narezany.calculator"
         minSdk = 24
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1.0"
         vectorDrawables.useSupportLibrary = true
     }
 
@@ -60,7 +60,9 @@ android {
 }
 
 dependencies {
-    val composeBom = platform("androidx.compose:compose-bom:2024.12.01")
+    // Compose 1.10 + Material 3 1.4.0: the first stable M3 Expressive release,
+    // which ships MotionScheme.expressive() and the M3 motion tokens.
+    val composeBom = platform("androidx.compose:compose-bom:2025.12.01")
     implementation(composeBom)
 
     implementation("androidx.core:core-ktx:1.15.0")

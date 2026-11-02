@@ -3,6 +3,7 @@ package com.narezany.calculator.ui.theme
 import android.os.Build
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -86,6 +87,9 @@ fun CalculatorTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
+        // M3 Expressive motion: spatial springs (dampingRatio 0.8 / stiffness 380)
+        // drive geometry, effects springs drive colour. Replaces plain tweens.
+        motionScheme = MotionScheme.expressive(),
         typography = CalculatorTypography,
         shapes = CalculatorShapes,
         content = content,
